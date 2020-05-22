@@ -1,65 +1,70 @@
-/*
- * Sean Smith 2016
- * Tamir nakar 2019
- */
+let aliasesMap = {};
 
-var aliases = {};
+function _updateAliasesMap() {
+  aliasesMap = {};
+  chrome.storage.sync.get(null, function (data) {
+    if (data.items) {
+      data.items.forEach((item) => {
+        // handle alias
+        const itemAlias = item.alias;
+        if (itemAlias && itemAlias !== "_dummy_") {
+          aliasesMap[itemAlias] = item.url;
+        }
+      });
+    }
+  });
+}
 
-chrome.storage.sync.get(null, function(obj) {
-  for (o in obj) {
-    aliases[o] = obj[o];
-  }
-});
+chrome.storage.onChanged.addListener(() => _updateAliasesMap());
 
-var re = /[\d\s\+\-=\(\)\*]+/g;
-var link = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
-var search_url = /https:\/\/www\.google\.com\/search\?q=(\w+)&/;
+const re = /[\d\s\+\-=\(\)\*]+/g;
+const link = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
 
 // On input changed, call this
-chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
-  var suggestions = [];
-  for (key in aliases) {
+chrome.omnibox.onInputChanged.addListener(function (text, suggest) {
+  const suggestions = [];
+  for (key in aliasesMap) {
     if (key.startsWith(text) || text == "") {
-      var desc = `<match>${text}: </match><dim>${key} → </dim><url>${aliases[key]}</url>`;
-      suggestions.push({ content: aliases[key], description: desc });
+      var desc = `<match>${text}: </match><dim>${key} → </dim><url>${aliasesMap[key]}</url>`;
+      suggestions.push({content: aliasesMap[key], description: desc});
     }
   }
   if (text.match(re)) {
     var result = eval(text).toString();
     // alert(result);
     chrome.omnibox.setDefaultSuggestion({
-      description: `<match>= </match><url>${result}</url>`
+      description: `<match>= </match><url>${result}</url>`,
     });
   } else if (suggestions.length > 0) {
     var first = suggestions.splice(0, 1)[0];
-    chrome.omnibox.setDefaultSuggestion({ description: first["description"] });
+    chrome.omnibox.setDefaultSuggestion({description: first["description"]});
   } else {
     chrome.omnibox.setDefaultSuggestion({
-      description: `<match>${text}: </match><dim> - Google Search</dim>`
+      description: `<match>${text}: </match><dim> - Google Search</dim>`,
     });
   }
   suggest(suggestions);
 });
 
-// This event is fired with the user accepts the input in the omnibox.
-chrome.omnibox.onInputEntered.addListener(function(text) {
-  if (text in aliases) {
-    chrome.tabs.update({ url: aliases[text] });
+// User has accepted what is typed into the omnibox. (by pressing enter)
+chrome.omnibox.onInputEntered.addListener(function (text) {
+  if (text in aliasesMap) {
+    chrome.tabs.update({url: aliasesMap[text]});
   } else if (text.match(link)) {
-    chrome.tabs.update({ url: text });
+    chrome.tabs.update({url: text});
   } else if (text.match(re)) {
     var result = eval(text).toString();
-    chrome.tabs.update({ url: `https://google.com/search?q=${result}` });
+    chrome.tabs.update({url: `https://google.com/search?q=${result}`});
   } else {
-    chrome.tabs.update({ url: `https://google.com/search?q=${text}` });
+    chrome.tabs.update({url: `https://google.com/search?q=${text}`});
   }
 });
 
 // Starting input
-chrome.omnibox.onInputStarted.addListener(function() {
-  chrome.storage.sync.get(null, function(obj) {
+chrome.omnibox.onInputStarted.addListener(function () {
+  chrome.storage.sync.get(null, function (obj) {
     for (o in obj) {
-      aliases[o] = obj[o];
+      aliasesMap[o] = obj[o];
     }
   });
 });

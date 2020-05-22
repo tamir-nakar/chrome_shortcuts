@@ -5,6 +5,7 @@ body {
   font-size: 14px;
   border-radius: 5px;
   min-height: 200px;
+  overflow: hidden;
 }
 
 [type="file"] {
@@ -50,7 +51,9 @@ h5 {
 
 #aliases {
   overflow-y: scroll;
+  overflow-x: hidden;
   height: 270px;
+  width: 90%;
 }
 #aliases::-webkit-scrollbar {
   width: 10px;
@@ -98,6 +101,10 @@ h5 {
   flex-direction: row;
 }
 
+#middleSection {
+  display: flex;
+  flex-direction: row;
+}
 #new_alias {
   margin-top: 25px;
   margin-bottom: 15px;
@@ -188,4 +195,10 @@ input[type="text"]:focus {
 
 .removeBtn:hover {
   content: url("../img/x-square-fill.svg");
+}
+
+.swal2-input {
+  height: 45px;
+  margin: 5px auto;
+  text-overflow: ellipsis;
 }
