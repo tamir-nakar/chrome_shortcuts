@@ -179,6 +179,7 @@ function handleImport() {
   } catch (e) {}
 }
 
+// note
 function downloadObjectAsJson(exportObj, exportName) {
   var dataStr =
     "data:text/json;charset=utf-8," +
